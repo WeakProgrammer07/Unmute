@@ -32,22 +32,21 @@
             </div>
         </div>
 
-        <!-- Ready panel -->
-        <div class="ready-panel" id="readyPanel">
-            <span class="ready-label">Queued</span>
-            <span class="ready-text" id="readyText"></span>
-            <button class="btn btn-speak" onclick="speak()">▶ Speak</button>
-            <button class="btn btn-stop" onclick="stop()">■ Stop</button>
-        </div>
-
         <!-- Countdown bar -->
         <div class="countdown-wrap" id="countdownWrap">
             <div class="countdown-header">
                 <span class="countdown-label">Firing in 1s — click Stop to cancel</span>
+                <button class="btn btn-stop" onclick="stop()">■ Stop</button>
             </div>
             <div class="countdown-bar-bg">
                 <div class="countdown-bar" id="countdownBar"></div>
             </div>
+        </div>
+
+        <!-- Response queue -->
+        <div id="queueSection" style="display:none;">
+            <div class="section-label">Response queue</div>
+            <div id="queueList" class="queue-list"></div>
         </div>
 
         <!-- Transcript -->

@@ -2,11 +2,12 @@ const socket = io();
 const pill = document.getElementById("pill");
 const pillText = document.getElementById("pillText");
 const transcript = document.getElementById("transcript");
-const readyPanel = document.getElementById("readyPanel");
-const readyText = document.getElementById("readyText");
 const generateBtn = document.getElementById("generateBtn");
 const countdownWrap = document.getElementById("countdownWrap");
 const countdownBar = document.getElementById("countdownBar");
+const queueSection = document.getElementById("queueSection");
+const queueList = document.getElementById("queueList");
+
 let partialLine = null;
 let countdownTimeout = null;
 
@@ -108,40 +109,135 @@ socket.on("trigger_countdown", d => {
     countdownTimeout = setTimeout(() => countdownWrap.classList.remove("visible"), delay);
 });
 
-// --- Ready / Spoke ---
-socket.on("ready", d => {
-    readyText.textContent = d.text;
-    readyPanel.classList.add("visible");
-    generateBtn.disabled = false;
-});
-
 socket.on("spoke", () => {
-    readyPanel.classList.remove("visible");
     countdownWrap.classList.remove("visible");
     if (countdownTimeout) clearTimeout(countdownTimeout);
 });
+
+// --- Queue ---
+
+function syncQueueVisibility() {
+    queueSection.style.display = queueList.children.length > 0 ? "block" : "none";
+}
+
+// Add a new card (loading state initially)
+socket.on("queue_add", d => {
+    // If card already exists (e.g. regenerate), update it
+    const existing = document.getElementById(`card-${d.id}`);
+    if (existing) {
+        setCardLoading(existing, d.loading);
+        if (d.text) existing.querySelector(".card-textarea").value = d.text;
+        return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "queue-card loading";
+    card.id = `card-${d.id}`;
+    // First card gets the "next" badge (auto-fire target)
+    const isFirst = queueList.children.length === 0;
+
+    card.innerHTML = `
+        <div class="card-header">
+            <span class="card-badge">${isFirst ? "next" : "queued"}</span>
+            <div class="card-actions">
+                <button class="btn btn-speak card-speak" onclick="speakItem('${d.id}')" disabled>▶ Speak</button>
+                <button class="btn btn-stop card-remove" onclick="removeItem('${d.id}')">✕</button>
+            </div>
+        </div>
+        <textarea class="card-textarea" rows="2" onblur="onCardBlur('${d.id}', this)">${d.text}</textarea>
+        <div class="card-footer">
+            <span class="card-status">generating…</span>
+        </div>
+    `;
+
+    queueList.appendChild(card);
+    syncQueueVisibility();
+    refreshBadges();
+});
+
+// Mark card as ready
+socket.on("queue_ready", d => {
+    const card = document.getElementById(`card-${d.id}`);
+    if (!card) return;
+    card.classList.remove("loading");
+    card.querySelector(".card-speak").disabled = false;
+    card.querySelector(".card-status").textContent = "ready";
+});
+
+// Mark card as errored
+socket.on("queue_error", d => {
+    const card = document.getElementById(`card-${d.id}`);
+    if (!card) return;
+    card.classList.remove("loading");
+    card.classList.add("error");
+    card.querySelector(".card-status").textContent = `error: ${d.error}`;
+});
+
+// Remove card
+socket.on("queue_remove", d => {
+    const card = document.getElementById(`card-${d.id}`);
+    if (card) {
+        card.classList.add("removing");
+        setTimeout(() => {
+            card.remove();
+            syncQueueVisibility();
+            refreshBadges();
+        }, 250);
+    }
+});
+
+function setCardLoading(card, loading) {
+    if (loading) {
+        card.classList.add("loading");
+        card.querySelector(".card-speak").disabled = true;
+        card.querySelector(".card-status").textContent = "regenerating…";
+    }
+}
+
+function refreshBadges() {
+    const cards = queueList.querySelectorAll(".queue-card");
+    cards.forEach((card, i) => {
+        const badge = card.querySelector(".card-badge");
+        if (badge) badge.textContent = i === 0 ? "next" : "queued";
+    });
+}
+
+function onCardBlur(id, textarea) {
+    const card = document.getElementById(`card-${id}`);
+    if (!card) return;
+    // Only regenerate if text actually changed
+    const original = card.dataset.originalText;
+    const current = textarea.value.trim();
+    if (original !== undefined && original !== current) {
+        card.dataset.originalText = current;
+        socket.emit("regenerate", { id, text: current });
+    } else if (original === undefined) {
+        card.dataset.originalText = current;
+    }
+}
+
+function speakItem(id) {
+    countdownWrap.classList.remove("visible");
+    if (countdownTimeout) clearTimeout(countdownTimeout);
+    socket.emit("speak", { id });
+}
+
+function removeItem(id) {
+    socket.emit("remove", { id });
+}
 
 // --- Actions ---
 function generate() {
     const text = document.getElementById("thoughtInput").value.trim();
     if (!text) return;
-    generateBtn.disabled = true;
-    readyPanel.classList.remove("visible");
     socket.emit("generate", { text });
     document.getElementById("thoughtInput").value = "";
-}
-
-function speak() {
-    countdownWrap.classList.remove("visible");
-    if (countdownTimeout) clearTimeout(countdownTimeout);
-    socket.emit("speak");
 }
 
 function stop() {
     countdownWrap.classList.remove("visible");
     if (countdownTimeout) clearTimeout(countdownTimeout);
     socket.emit("stop");
-    generateBtn.disabled = false;
 }
 
 document.getElementById("thoughtInput").addEventListener("keydown", e => {

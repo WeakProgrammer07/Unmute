@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNMUTE - Pitch Deck</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0c0c;
+            --panel: #141414;
+            --border: #1f1f1f;
+            --accent: #c8f04a;
+            --accent2: #f04a4a;
+            --text: #ececec;
+            --muted: #444;
+            --sub: #888;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Presentation Container */
+        #deck {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Slides */
+        .slide {
+            display: none;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Typography */
+        h1.logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 6rem;
+            letter-spacing: 0.06em;
+            line-height: 1;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        h1.logo em {
+            color: var(--accent);
+            font-style: normal;
+        }
+
+        h2 {
+            font-family: 'DM Mono', monospace;
+            font-size: 2rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--sub);
+            font-weight: 300;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        li {
+            font-size: 1.3rem;
+            font-weight: 300;
+            line-height: 1.6;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            padding-left: 40px;
+        }
+
+        li::before {
+            content: '■';
+            position: absolute;
+            left: 20px;
+            color: var(--accent);
+            font-size: 0.8rem;
+            top: 26px;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-radius: 6px;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(200, 240, 74, 0.4);
+            background: transparent;
+            color: var(--accent);
+        }
+
+        .btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .progress-text {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .citation {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            vertical-align: super;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="deck">
+        <div class="slide active">
+            <h1 class="logo">UN<em>MUTE</em></h1>
+            <p class="subtitle">A meeting voice proxy that gives everyone an equal voice in the room.<span
+                    class="citation"></span><br><br><span style="font-size: 1rem; color: #444;">Mountain Madness
+                    2026</span></p>
+        </div>
+
+        <div class="slide">
+            <h2>The Problem</h2>
+            <ul>
+                <li>Not everyone finds it easy to jump into fast-moving conversations.<span class="citation"></span>
+                </li>
+                <li>People with social anxiety may struggle to interject when the pressure is high.<span
+                        class="citation"></span></li>
+                <li>Non-native speakers often need a moment to compose their thoughts in a second language.<span
+                        class="citation"></span></li>
+                <li>Individuals with stutters or other speech differences want to participate without pressure.<span
+                        class="citation"></span></li>
+                <li>Many people simply think better in writing than on the spot.<span class="citation"></span></li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>Our Solution</h2>
+            <ul>
+                <li>UNMUTE doesn't replace your voice; it gives it back to you.<span class="citation"></span></li>
+                <li>You type your thought into the web UI, and your response is prepared in the background while the
+                    conversation continues.<span class="citation"></span></li>
+                <li>It listens to your call and detects when you are being invited to speak.<span
+                        class="citation"></span></li>
+                <li>It delivers your thoughts at exactly the right moment—clearly, confidently, and on time.<span
+                        class="citation"></span></li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>Key Features</h2>
+            <ul>
+                <li><span class="highlight">Live Transcript:</span> Real-time speech-to-text ensures you always know
+                    what is being said.<span class="citation"></span></li>
+                <li><span class="highlight">Trigger Words:</span> Auto-fires your queued response when a cue phrase—like
+                    "any questions" or your name—is detected mid-speech.<span class="citation"></span></li>
+                <li><span class="highlight">Cancellation Delay:</span> A visible 1-second countdown gives you a moment
+                    to press Stop before your response plays.<span class="citation"></span></li>
+                <li><span class="highlight">Manual Speak:</span> Take control and press "Speak" to jump in manually
+                    whenever it feels right.<span class="citation"></span></li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>Under The Hood</h2>
+            <ul>
+                <li><span class="highlight">Audio Routing:</span> Utilizes BlackHole 2ch to simultaneously capture
+                    meeting audio and route output.<span class="citation"></span></li>
+                <li><span class="highlight">Backend Engine:</span> Built using Python, Flask, and Flask-SocketIO for
+                    asynchronous event handling.<span class="citation"></span></li>
+                <li><span class="highlight">Speech-to-Text:</span> Employs the ElevenLabs Scribe v2 model over
+                    websockets for real-time live transcription.<span class="citation"></span></li>
+                <li><span class="highlight">Text-to-Speech:</span> Uses the ElevenLabs Flash v2.5 model to quickly
+                    generate high-quality audio responses.<span class="citation"></span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="prevSlide()">❮ Prev</button>
+        <span class="progress-text" id="progress">1 / 5</span>
+        <button class="btn" onclick="nextSlide()">Next ❯</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const progress = document.getElementById('progress');
+
+        function updateDeck() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            progress.textContent = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateDeck();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateDeck();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+
+</html>
