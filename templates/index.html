@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNMUTE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0c0c0c;
+            --panel: #141414;
+            --border: #1f1f1f;
+            --accent: #c8f04a;
+            --accent2: #f04a4a;
+            --text: #ececec;
+            --muted: #444;
+            --sub: #888;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* HEADER */
+        header {
+            padding: 36px 0 28px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.2rem;
+            letter-spacing: 0.06em;
+            line-height: 1;
+        }
+
+        .logo em {
+            color: var(--accent);
+            font-style: normal;
+        }
+
+        .status-pill {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            color: var(--sub);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.3s;
+        }
+
+        .status-pill .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: background 0.3s;
+        }
+
+        .status-pill.listening .dot {
+            background: var(--accent);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        .status-pill.generating {
+            color: #aaa;
+        }
+
+        .status-pill.generating .dot {
+            background: #aaa;
+        }
+
+        .status-pill.ready {
+            border-color: rgba(200, 240, 74, 0.3);
+            color: var(--accent);
+        }
+
+        .status-pill.ready .dot {
+            background: var(--accent);
+        }
+
+        .status-pill.speaking {
+            border-color: rgba(240, 74, 74, 0.3);
+            color: var(--accent2);
+        }
+
+        .status-pill.speaking .dot {
+            background: var(--accent2);
+            animation: blink 0.4s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.2
+            }
+        }
+
+        /* MAIN */
+        main {
+            padding: 32px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* INPUT */
+        .input-block {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .input-block:focus-within {
+            border-color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 300;
+            padding: 20px 20px 12px;
+            resize: none;
+            outline: none;
+            min-height: 90px;
+        }
+
+        textarea::placeholder {
+            color: var(--muted);
+        }
+
+        .input-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-hint {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-radius: 6px;
+            padding: 8px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-generate {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-generate:hover {
+            opacity: 0.85;
+        }
+
+        .btn-generate:disabled {
+            background: var(--border);
+            color: var(--muted);
+            cursor: not-allowed;
+        }
+
+        /* READY PANEL */
+        .ready-panel {
+            display: none;
+            background: var(--panel);
+            border: 1px solid rgba(200, 240, 74, 0.2);
+            border-radius: 12px;
+            padding: 18px 20px;
+            align-items: center;
+            gap: 12px;
+            animation: fadeUp 0.25s ease;
+        }
+
+        .ready-panel.visible {
+            display: flex;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .ready-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .ready-text {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #ccc;
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        .btn-speak {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid rgba(200, 240, 74, 0.4);
+        }
+
+        .btn-speak:hover {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .btn-stop {
+            background: transparent;
+            color: var(--accent2);
+            border: 1px solid rgba(240, 74, 74, 0.3);
+        }
+
+        .btn-stop:hover {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        /* COUNTDOWN BAR */
+        .countdown-wrap {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .countdown-wrap.visible {
+            display: flex;
+        }
+
+        .countdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .countdown-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--accent2);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .countdown-bar-bg {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .countdown-bar {
+            height: 100%;
+            background: var(--accent2);
+            border-radius: 2px;
+            width: 100%;
+            transition: width linear;
+        }
+
+        /* TRANSCRIPT */
+        .section-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .transcript-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .transcript-box::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .transcript-box::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .t-line {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.8;
+            color: var(--sub);
+            padding: 2px 0;
+            border-bottom: 1px solid #181818;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .t-line.partial {
+            color: #383838;
+            font-style: italic;
+        }
+
+        .t-line.trigger {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        /* TRIGGER SETTINGS */
+        .triggers-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .triggers-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .triggers-title {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Toggle switch */
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--sub);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            inset: 0;
+            background: var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .slider:before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            left: 3px;
+            top: 3px;
+            background: var(--sub);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        input:checked+.slider {
+            background: rgba(200, 240, 74, 0.3);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(16px);
+            background: var(--accent);
+        }
+
+        /* Tag input */
+        .tag-input-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 10px;
+            color: var(--sub);
+        }
+
+        .tag button {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.7rem;
+            line-height: 1;
+            padding: 0;
+            transition: color 0.15s;
+        }
+
+        .tag button:hover {
+            color: var(--accent2);
+        }
+
+        .tag-add {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            padding: 4px 10px;
+            color: var(--muted);
+            outline: none;
+            width: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .tag-add:focus {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .tag-add::placeholder {
+            color: var(--muted);
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-text {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">UN<em>MUTE</em></div>
+        <div class="status-pill listening" id="pill">
+            <div class="dot"></div>
+            <span id="pillText">Connecting...</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Input -->
+        <div class="input-block">
+            <textarea id="thoughtInput" placeholder="Type your thought..." rows="3"></textarea>
+            <div class="input-footer">
+                <span class="input-hint">↵ Enter to generate</span>
+                <button class="btn btn-generate" id="generateBtn" onclick="generate()">Generate</button>
+            </div>
+        </div>
+
+        <!-- Ready panel -->
+        <div class="ready-panel" id="readyPanel">
+            <span class="ready-label">Queued</span>
+            <span class="ready-text" id="readyText"></span>
+            <button class="btn btn-speak" onclick="speak()">▶ Speak</button>
+            <button class="btn btn-stop" onclick="stop()">■ Stop</button>
+        </div>
+
+        <!-- Countdown bar -->
+        <div class="countdown-wrap" id="countdownWrap">
+            <div class="countdown-header">
+                <span class="countdown-label">Firing in 1s — click Stop to cancel</span>
+            </div>
+            <div class="countdown-bar-bg">
+                <div class="countdown-bar" id="countdownBar"></div>
+            </div>
+        </div>
+
+        <!-- Transcript -->
+        <div>
+            <div class="section-label">Live transcript</div>
+            <div class="transcript-box" id="transcript">
+                <div class="t-line partial">— waiting for audio —</div>
+            </div>
+        </div>
+
+        <!-- Trigger settings -->
+        <div class="triggers-panel">
+            <div class="triggers-top">
+                <span class="triggers-title">Auto-fire trigger words</span>
+                <div class="toggle-wrap">
+                    <span class="toggle-label" id="toggleLabel">On</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="triggerToggle" checked onchange="updateTriggers()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="tag-input-wrap" id="tagWrap">
+                <!-- tags rendered here -->
+                <input class="tag-add" id="tagInput" placeholder="+ add word" onkeydown="handleTagKey(event)">
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <span class="footer-text">meeting voice proxy · elevenlabs</span>
+        <span class="footer-text" id="footerStatus"></span>
+    </footer>
+
+    <script>
+        const socket = io();
+        const pill = document.getElementById("pill");
+        const pillText = document.getElementById("pillText");
+        const transcript = document.getElementById("transcript");
+        const readyPanel = document.getElementById("readyPanel");
+        const readyText = document.getElementById("readyText");
+        const generateBtn = document.getElementById("generateBtn");
+        const countdownWrap = document.getElementById("countdownWrap");
+        const countdownBar = document.getElementById("countdownBar");
+        let partialLine = null;
+        let countdownTimeout = null;
+
+        // --- Trigger word state ---
+        let triggerWords = ["questions", "thoughts", "liam", "add anything", "feedback"];
+        let triggersEnabled = true;
+
+        function renderTags() {
+            const wrap = document.getElementById("tagWrap");
+            const input = document.getElementById("tagInput");
+            wrap.innerHTML = "";
+            triggerWords.forEach(w => {
+                const tag = document.createElement("div");
+                tag.className = "tag";
+                tag.innerHTML = `<span>${w}</span><button onclick="removeTag('${w}')">✕</button>`;
+                wrap.appendChild(tag);
+            });
+            wrap.appendChild(input);
+        }
+
+        function removeTag(word) {
+            triggerWords = triggerWords.filter(w => w !== word);
+            renderTags();
+            updateTriggers();
+        }
+
+        function handleTagKey(e) {
+            if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                const val = e.target.value.trim().toLowerCase();
+                if (val && !triggerWords.includes(val)) {
+                    triggerWords.push(val);
+                    renderTags();
+                    updateTriggers();
+                }
+                e.target.value = "";
+            }
+        }
+
+        function updateTriggers() {
+            triggersEnabled = document.getElementById("triggerToggle").checked;
+            document.getElementById("toggleLabel").textContent = triggersEnabled ? "On" : "Off";
+            socket.emit("update_triggers", { words: triggerWords, enabled: triggersEnabled });
+        }
+
+        renderTags();
+
+        // --- Status ---
+        function setStatus(msg, state) {
+            pillText.textContent = msg;
+            pill.className = "status-pill " + (state || "listening");
+        }
+
+        socket.on("connect", () => setStatus("Connected", "listening"));
+        socket.on("disconnect", () => setStatus("Disconnected", ""));
+        socket.on("status", d => setStatus(d.msg, d.state));
+
+        // --- Transcript ---
+        socket.on("transcript", d => {
+            if (!d.final) {
+                if (!partialLine) {
+                    partialLine = document.createElement("div");
+                    partialLine.className = "t-line partial";
+                    transcript.appendChild(partialLine);
+                }
+                partialLine.textContent = d.text;
+            } else {
+                if (partialLine) {
+                    partialLine.classList.remove("partial");
+                    partialLine = null;
+                } else {
+                    const line = document.createElement("div");
+                    line.className = "t-line";
+                    line.textContent = d.text;
+                    transcript.appendChild(line);
+                }
+            }
+            transcript.scrollTop = transcript.scrollHeight;
+        });
+
+        socket.on("trigger", d => {
+            const last = transcript.querySelector(".t-line:last-child");
+            if (last) last.classList.add("trigger");
+        });
+
+        // --- Countdown bar ---
+        socket.on("trigger_countdown", d => {
+            const delay = d.delay * 1000;
+            countdownWrap.classList.add("visible");
+            countdownBar.style.transition = "none";
+            countdownBar.style.width = "100%";
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    countdownBar.style.transition = `width ${delay}ms linear`;
+                    countdownBar.style.width = "0%";
+                });
+            });
+            if (countdownTimeout) clearTimeout(countdownTimeout);
+            countdownTimeout = setTimeout(() => countdownWrap.classList.remove("visible"), delay);
+        });
+
+        // --- Ready / Spoke ---
+        socket.on("ready", d => {
+            readyText.textContent = d.text;
+            readyPanel.classList.add("visible");
+            generateBtn.disabled = false;
+        });
+
+        socket.on("spoke", () => {
+            readyPanel.classList.remove("visible");
+            countdownWrap.classList.remove("visible");
+            if (countdownTimeout) clearTimeout(countdownTimeout);
+        });
+
+        // --- Actions ---
+        function generate() {
+            const text = document.getElementById("thoughtInput").value.trim();
+            if (!text) return;
+            generateBtn.disabled = true;
+            readyPanel.classList.remove("visible");
+            socket.emit("generate", { text });
+            document.getElementById("thoughtInput").value = "";
+        }
+
+        function speak() {
+            countdownWrap.classList.remove("visible");
+            if (countdownTimeout) clearTimeout(countdownTimeout);
+            socket.emit("speak");
+        }
+
+        function stop() {
+            countdownWrap.classList.remove("visible");
+            if (countdownTimeout) clearTimeout(countdownTimeout);
+            socket.emit("stop");
+            generateBtn.disabled = false;
+        }
+
+        document.getElementById("thoughtInput").addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generate(); }
+        });
+    </script>
+</body>
+
+</html>
