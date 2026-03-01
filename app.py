@@ -176,5 +176,5 @@ def index():
 
 if __name__ == "__main__":
     threading.Thread(target=start_listener, daemon=True).start()
-    print("=== UNMUTE running at http://localhost:5001 ===")
+    print("UNMUTE running at http://localhost:5001")
     socketio.run(app, host="0.0.0.0", port=5001, debug=False, allow_unsafe_werkzeug=True)
