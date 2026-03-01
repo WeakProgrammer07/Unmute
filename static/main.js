@@ -151,6 +151,8 @@ socket.on("queue_add", d => {
     `;
 
     queueList.appendChild(card);
+    // Set baseline so onCardBlur can detect changes immediately
+    card.dataset.originalText = d.text;
     syncQueueVisibility();
     refreshBadges();
 });
@@ -162,6 +164,9 @@ socket.on("queue_ready", d => {
     card.classList.remove("loading");
     card.querySelector(".card-speak").disabled = false;
     card.querySelector(".card-status").textContent = "ready";
+    // Update baseline so next edit is compared against the regenerated text
+    const ta = card.querySelector(".card-textarea");
+    if (ta) card.dataset.originalText = ta.value.trim();
 });
 
 // Mark card as errored
@@ -205,14 +210,11 @@ function refreshBadges() {
 function onCardBlur(id, textarea) {
     const card = document.getElementById(`card-${id}`);
     if (!card) return;
-    // Only regenerate if text actually changed
-    const original = card.dataset.originalText;
     const current = textarea.value.trim();
-    if (original !== undefined && original !== current) {
+    if (!current) return;
+    if (card.dataset.originalText !== current) {
         card.dataset.originalText = current;
         socket.emit("regenerate", { id, text: current });
-    } else if (original === undefined) {
-        card.dataset.originalText = current;
     }
 }
 

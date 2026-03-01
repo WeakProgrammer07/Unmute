@@ -245,11 +245,41 @@
                     generate high-quality audio responses.<span class="citation"></span></li>
             </ul>
         </div>
+        <div class="slide">
+            <h2>Future Roadmap & Challenges</h2>
+            <ul>
+                <li>
+                    <span class="highlight">Current Bottleneck:</span> The "Mic Switch" issue—users currently must
+                    manually
+                    switch their input device in Zoom/Meet to route UNMUTE's audio.
+                </li>
+                <li>
+                    <span class="highlight">Virtual Mic Integration:</span> Developing a custom virtual driver to
+                    eliminate the
+                    need for manual device switching during a live call.
+                </li>
+                <li>
+                    <span class="highlight">Low-Latency Optimizations:</span> Further reducing the round-trip time
+                    between text
+                    input and ElevenLabs TTS generation.
+                </li>
+                <li>
+                    <span class="highlight">Contextual Triggering:</span> Using LLMs to detect "intent to invite" rather
+                    than
+                    just static keyword matching.
+                </li>
+                <li>
+                    <span class="highlight">Cross-Platform Support:</span> Expanding beyond the macOS `afplay` and
+                    BlackHole
+                    dependency for Windows and Linux users.
+                </li>
+            </ul>
+        </div>
     </div>
 
     <div class="controls">
         <button class="btn" onclick="prevSlide()">❮ Prev</button>
-        <span class="progress-text" id="progress">1 / 5</span>
+        <span class="progress-text" id="progress">1 / 6</span>
         <button class="btn" onclick="nextSlide()">Next ❯</button>
     </div>
 
